@@ -1,0 +1,137 @@
+{
+  "name": "command-king",
+  "displayName": "Command King",
+  "description": "Manage and execute custom commands from .cmdk files",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.101.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "workspaceContains:**/*.cmdk"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "commandKingExplorer",
+          "name": "Command King"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "commandKing.refreshCommands",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "commandKing.runCommand",
+        "title": "Run Command",
+        "icon": "$(play)"
+      },
+      {
+        "command": "commandKing.editCommand",
+        "title": "Edit Command",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "commandKing.deleteCommand",
+        "title": "Delete Command",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "commandKing.addCommand",
+        "title": "Add Command",
+        "icon": "$(add)"
+      },
+      {
+        "command": "commandKing.openCmdkFile",
+        "title": "Open .cmdk File",
+        "icon": "$(file)"
+      },
+      {
+        "command": "commandKing.showKebabMenu",
+        "title": "More Actions",
+        "icon": "$(kebab-vertical)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "commandKing.refreshCommands",
+          "when": "view == commandKingExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "commandKing.addCommand",
+          "when": "view == commandKingExplorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "commandKing.writeCommand",
+          "when": "view == commandKingExplorer && viewItem == command",
+          "group": "inline"
+        },
+        {
+          "command": "commandKing.showKebabMenu",
+          "when": "view == commandKingExplorer && viewItem == command",
+          "group": "inline"
+        },
+        {
+          "command": "commandKing.runCommand",
+          "when": "view == commandKingExplorer && viewItem == command",
+          "group": "commandActions@1"
+        },
+        {
+          "command": "commandKing.editCommand",
+          "when": "view == commandKingExplorer && viewItem == command",
+          "group": "commandActions@2"
+        },
+        {
+          "command": "commandKing.deleteCommand",
+          "when": "view == commandKingExplorer && viewItem == command",
+          "group": "commandActions@3"
+        },
+        {
+          "command": "commandKing.openCmdkFile",
+          "when": "view == commandKingExplorer && viewItem == cmdkFile",
+          "group": "inline"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run package",
+    "compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.101.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "eslint": "^9.25.1",
+    "esbuild": "^0.25.3",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.8.3",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
