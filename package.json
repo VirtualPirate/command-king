@@ -4,6 +4,10 @@
   "description": "Manage and execute custom commands from .cmdk files",
   "version": "0.0.1",
   "publisher": "artazasameen",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/artazasameen/command-king.git"
+  },
   "icon": "command-king.png",
   "engines": {
     "vscode": "^1.96.0"
@@ -84,6 +88,11 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "commandKing.runCommand",
+          "when": "view == commandKingExplorer && viewItem == command",
+          "group": "inline"
+        },
         {
           "command": "commandKing.writeCommand",
           "when": "view == commandKingExplorer && viewItem == command",

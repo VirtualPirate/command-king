@@ -9,14 +9,16 @@ export function createRunCommand(provider: CommandTreeProvider) {
       return;
     }
 
+    // Always create a new terminal session for run commands
     // Create terminal name with folder path using slashes
     const folderPath =
       command.path.length > 1
         ? command.path.slice(0, -1).join("/") + "/" + command.key
         : command.key;
-    const terminalName = `Command King: ${folderPath}`;
+    const terminalName = `${folderPath}`;
 
     const terminal = vscode.window.createTerminal(terminalName);
+
     terminal.show();
     // Execute the command immediately
     terminal.sendText(command.command, true);

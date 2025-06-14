@@ -2,6 +2,8 @@
 
 Command King is a VS Code extension that allows you to manage and execute custom commands from `.cmdk` files in your workspace. It provides a hierarchical tree view for organizing commands and quick execution through the integrated terminal.
 
+![Command King Demo](high_quality_output.gif)
+
 ## Features
 
 - **Automatic Discovery**: Scans your workspace for `.cmdk` files and `package.json` files automatically
@@ -234,7 +236,3 @@ You can mix both simple strings and extended objects at any level:
 3. Make your changes
 4. Test thoroughly
 5. Submit a pull request
-
-## License
-
-This extension is provided as-is for educational and development purposes.
