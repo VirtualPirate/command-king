@@ -6,7 +6,7 @@
   "publisher": "ArtazaSameen",
   "repository": {
     "type": "git",
-    "url": "https://github.com/artazasameen/command-king.git"
+    "url": "https://github.com/VirtualPirate/command-king"
   },
   "icon": "command-king.png",
   "engines": {
