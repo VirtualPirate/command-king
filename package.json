@@ -3,6 +3,7 @@
   "displayName": "Command King",
   "description": "Manage and execute custom commands from .cmdk files",
   "version": "0.0.1",
+  "icon": "command-king.png",
   "engines": {
     "vscode": "^1.101.0"
   },
