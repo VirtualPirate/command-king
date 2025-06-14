@@ -17,6 +17,14 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "languages": [
+      {
+        "id": "json",
+        "extensions": [
+          ".cmdk"
+        ]
+      }
+    ],
     "views": {
       "explorer": [
         {
