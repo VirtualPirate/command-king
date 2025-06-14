@@ -42,7 +42,7 @@ export class CommandTreeProvider
       // Show description in the label if available
       const description = element.command.description;
       if (description) {
-        treeItem.label = `${element.label} - ${description}`;
+        treeItem.label = `${element.label}`;
         treeItem.tooltip = `Command: ${element.command.command}\nDescription: ${description}`;
       } else {
         treeItem.tooltip = `Command: ${element.command.command}`;
