@@ -2,7 +2,7 @@
   "name": "command-king",
   "displayName": "Command King",
   "description": "Manage and execute custom commands from .cmdk files",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "ArtazaSameen",
   "repository": {
     "type": "git",
