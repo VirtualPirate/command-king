@@ -219,12 +219,27 @@ export class CommandTreeProvider
       // Build nested structure based on actual JSON object nesting
       const buildNestedStructure = (
         parentNode: CommandNode,
-        depth: number = 0
+        depth: number = 0,
+        pathPrefix: string[] = []
       ) => {
         const groups = new Map<string, CommandNode>();
 
         for (const cmd of commands) {
+          // Only process commands that match the current path prefix
           if (cmd.path.length <= depth) {
+            continue;
+          }
+
+          // Check if this command belongs to the current path
+          let belongsToCurrentPath = true;
+          for (let i = 0; i < pathPrefix.length; i++) {
+            if (i >= cmd.path.length || cmd.path[i] !== pathPrefix[i]) {
+              belongsToCurrentPath = false;
+              break;
+            }
+          }
+
+          if (!belongsToCurrentPath) {
             continue;
           }
 
@@ -253,11 +268,12 @@ export class CommandTreeProvider
 
         // Recursively build children for groups
         for (const [groupKey, groupNode] of groups) {
-          buildNestedStructure(groupNode, depth + 1);
+          const newPathPrefix = [...pathPrefix, groupKey];
+          buildNestedStructure(groupNode, depth + 1, newPathPrefix);
         }
       };
 
-      buildNestedStructure(fileNode);
+      buildNestedStructure(fileNode, 0, []);
       this.treeData.push(fileNode);
     }
 
