@@ -1,45 +1,58 @@
 {
-  "backend-api/build": {
-    "command": "npm run build",
-    "description": "Build the backend API for production"
+  "backend-api": {
+    "build": {
+      "command": "npm run build",
+      "description": "Build the backend API for production"
+    },
+    "run": {
+      "command": "npm run dev",
+      "description": "Start the backend API in development mode"
+    },
+    "test": "npm test"
   },
-  "backend-api/run": {
-    "command": "npm run dev",
-    "description": "Start the backend API in development mode"
+  "database": {
+    "seed": {
+      "command": "npm run db:seed",
+      "description": "Populate database with initial data"
+    },
+    "migrate": {
+      "command": "npm run db:migrate",
+      "description": "Run database migrations"
+    },
+    "others": {
+      "data-only": "npm run db:data-only",
+      "backup": {
+        "command": "npm run db:backup",
+        "description": "Create a backup of the database"
+      }
+    }
   },
-  "backend-api/test": "npm test",
-  "database/seed": {
-    "command": "npm run db:seed",
-    "description": "Populate database with initial data"
+  "frontend": {
+    "build": {
+      "command": "npm run build:frontend",
+      "description": "Build frontend assets for production"
+    },
+    "dev": "npm run dev:frontend"
   },
-  "database/migrate": {
-    "command": "npm run db:migrate",
-    "description": "Run database migrations"
+  "docker": {
+    "up": {
+      "command": "docker-compose up -d",
+      "description": "Start all Docker services in detached mode"
+    },
+    "down": "docker-compose down",
+    "logs": {
+      "command": "docker-compose logs -f",
+      "description": "Follow Docker container logs in real-time"
+    }
   },
-  "database/others/data-only": "npm run db:data-only",
-  "database/others/backup": {
-    "command": "npm run db:backup",
-    "description": "Create a backup of the database"
-  },
-  "frontend/build": {
-    "command": "npm run build:frontend",
-    "description": "Build frontend assets for production"
-  },
-  "frontend/dev": "npm run dev:frontend",
-  "docker/up": {
-    "command": "docker-compose up -d",
-    "description": "Start all Docker services in detached mode"
-  },
-  "docker/down": "docker-compose down",
-  "docker/logs": {
-    "command": "docker-compose logs -f",
-    "description": "Follow Docker container logs in real-time"
-  },
+  "special_command": "echo 'This is a special command'",
   "random_command": "echo 'Hello from Command King!'",
-  "git/status": "git status",
-  "git/pull": "git pull",
-  "git/push": {
-    "command": "git push origin main",
-    "description": "Push changes to the main branch"
+  "git": {
+    "status": "git status",
+    "pull": "git pull",
+    "push": {
+      "command": "git push origin main",
+      "description": "Push changes to the main branch"
+    }
   }
 } 

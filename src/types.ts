@@ -3,6 +3,7 @@ export interface CommandItem {
   command: string;
   description?: string;
   filePath: string;
+  path: string[];
 }
 
 export interface CommandNode {

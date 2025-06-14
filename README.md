@@ -6,7 +6,7 @@ Command King is a VS Code extension that allows you to manage and execute custom
 
 - **Automatic Discovery**: Scans your workspace for `.cmdk` files and `package.json` files automatically
 - **Package.json Scripts**: Automatically includes npm scripts from package.json files in the command tree
-- **Hierarchical Organization**: Commands are organized in a tree structure based on their keys (using `/` as separator)
+- **Hierarchical Organization**: Commands are organized in a tree structure based on nested object structure
 - **Quick Execution**: Run commands directly in VS Code's integrated terminal
 - **Command Descriptions**: Add optional descriptions to your commands for better documentation and team collaboration
 - **CRUD Operations**: Add, edit, and delete commands through the UI (read-only for package.json scripts)
@@ -21,29 +21,41 @@ Command King automatically discovers and displays npm scripts from any `package.
 
 ### Creating .cmdk Files
 
-Create `.cmdk` files in your workspace with JSON content mapping command keys to shell commands. You can use either simple string commands or extended objects with descriptions:
+Create `.cmdk` files in your workspace with JSON content using a nested object structure. You can use either simple string commands or extended objects with descriptions:
 
 ```json
 {
-  "backend-api/build": {
-    "command": "npm run build",
-    "description": "Build the backend API for production"
+  "backend-api": {
+    "build": {
+      "command": "npm run build",
+      "description": "Build the backend API for production"
+    },
+    "run": "npm run dev",
+    "test": "npm test"
   },
-  "backend-api/run": "npm run dev",
-  "database/seed": {
-    "command": "npm run db:seed",
-    "description": "Populate database with initial data"
+  "database": {
+    "seed": {
+      "command": "npm run db:seed",
+      "description": "Populate database with initial data"
+    },
+    "migrate": "npm run db:migrate",
+    "others": {
+      "data-only": "npm run db:data-only"
+    }
   },
-  "database/migrate": "npm run db:migrate",
-  "database/others/data-only": "npm run db:data-only",
-  "docker/up": {
-    "command": "docker-compose up -d",
-    "description": "Start all Docker services in detached mode"
+  "docker": {
+    "up": {
+      "command": "docker-compose up -d",
+      "description": "Start all Docker services in detached mode"
+    },
+    "down": "docker-compose down"
   },
-  "docker/down": "docker-compose down",
+  "special_command": "echo 'Special command example'",
   "random_command": "echo 'Hello World!'"
 }
 ```
+
+**Note**: Hierarchy is created through the nested object structure in your JSON configuration.
 
 ### Tree View Structure
 
@@ -142,15 +154,36 @@ pnpm test
 
 ## File Format
 
-`.cmdk` files use JSON format with the following structure:
+`.cmdk` files use JSON format with a nested object structure:
 
-### Simple Format (Backward Compatible)
+### Nested Object Structure
 
 ```json
 {
-  "command-key": "shell command to execute",
-  "group/subcommand": "another command",
-  "nested/deep/command": "deeply nested command"
+  "group": {
+    "subcommand": "shell command to execute",
+    "another-subcommand": {
+      "command": "another shell command",
+      "description": "Optional description"
+    },
+    "nested": {
+      "deep": {
+        "command": "deeply nested command"
+      }
+    }
+  },
+  "simple-command": "echo 'Hello World!'"
+}
+```
+
+### Simple String Commands
+
+```json
+{
+  "backend": {
+    "build": "npm run build",
+    "start": "npm start"
+  }
 }
 ```
 
@@ -158,35 +191,41 @@ pnpm test
 
 ```json
 {
-  "command-key": {
-    "command": "shell command to execute",
-    "description": "Optional description of what this command does"
-  },
-  "group/subcommand": {
-    "command": "another command",
-    "description": "Description for this command"
+  "backend": {
+    "build": {
+      "command": "npm run build",
+      "description": "Build the application for production"
+    },
+    "start": {
+      "command": "npm start",
+      "description": "Start the development server"
+    }
   }
 }
 ```
 
 ### Mixed Format
 
-You can mix both simple strings and extended objects in the same file:
+You can mix both simple strings and extended objects at any level:
 
 ```json
 {
-  "simple-command": "echo 'Hello World!'",
-  "documented-command": {
-    "command": "npm run build",
-    "description": "Build the application for production"
-  }
+  "backend": {
+    "build": "npm run build",
+    "start": {
+      "command": "npm start",
+      "description": "Start the development server"
+    }
+  },
+  "simple-command": "echo 'Hello World!'"
 }
 ```
 
-- **Keys**: Can contain forward slashes (`/`) to create hierarchical organization
+- **Structure**: Uses nested objects to create hierarchical organization
 - **Values**: Can be either strings (simple format) or objects with `command` and optional `description` properties
 - **File Extension**: Must be `.cmdk`
 - **Descriptions**: When provided, descriptions appear in the tree view and tooltips for better documentation
+- **Key Characters**: Command keys can contain any characters including special characters
 
 ## Contributing
 

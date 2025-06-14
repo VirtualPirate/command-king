@@ -105,30 +105,45 @@ export class CommandTreeProvider
           const jsonContent = JSON.parse(content.toString());
 
           const commands: CommandItem[] = [];
-          for (const [key, commandData] of Object.entries(jsonContent)) {
-            if (typeof commandData === "string") {
-              commands.push({
-                key,
-                command: commandData,
-                filePath: file.fsPath,
-              });
-            } else if (
-              typeof commandData === "object" &&
-              commandData !== null &&
-              "command" in commandData &&
-              typeof commandData.command === "string"
-            ) {
-              commands.push({
-                key,
-                command: commandData.command,
-                description:
-                  "description" in commandData
-                    ? (commandData.description as string)
-                    : undefined,
-                filePath: file.fsPath,
-              });
+
+          // Parse structure keeping nested objects intact
+          const parseCommands = (obj: any, path: string[] = []) => {
+            for (const [key, value] of Object.entries(obj)) {
+              const currentPath = [...path, key];
+
+              if (typeof value === "string") {
+                // Simple string command
+                commands.push({
+                  key: key,
+                  command: value,
+                  filePath: file.fsPath,
+                  path: currentPath,
+                });
+              } else if (
+                typeof value === "object" &&
+                value !== null &&
+                "command" in value &&
+                typeof value.command === "string"
+              ) {
+                // Extended command with description
+                commands.push({
+                  key: key,
+                  command: value.command,
+                  description:
+                    "description" in value
+                      ? (value.description as string)
+                      : undefined,
+                  filePath: file.fsPath,
+                  path: currentPath,
+                });
+              } else if (typeof value === "object" && value !== null) {
+                // Nested object, recurse deeper
+                parseCommands(value, currentPath);
+              }
             }
-          }
+          };
+
+          parseCommands(jsonContent);
 
           this.commands.set(file.fsPath, commands);
         } catch (error) {
@@ -172,6 +187,7 @@ export class CommandTreeProvider
                   key: scriptName,
                   command: `npm run ${scriptName}`,
                   filePath: file.fsPath,
+                  path: [scriptName],
                 });
               }
             }
@@ -200,51 +216,48 @@ export class CommandTreeProvider
         children: [],
       };
 
-      // Build hierarchical structure
-      const rootGroups: Map<string, CommandNode> = new Map();
+      // Build nested structure based on actual JSON object nesting
+      const buildNestedStructure = (
+        parentNode: CommandNode,
+        depth: number = 0
+      ) => {
+        const groups = new Map<string, CommandNode>();
 
-      for (const cmd of commands) {
-        const parts = cmd.key.split("/");
-        let currentLevel = rootGroups;
-        let currentParent = fileNode;
+        for (const cmd of commands) {
+          if (cmd.path.length <= depth) {
+            continue;
+          }
 
-        // Navigate/create the hierarchy
-        for (let i = 0; i < parts.length; i++) {
-          const part = parts[i];
-          const isLastPart = i === parts.length - 1;
+          const currentKey = cmd.path[depth];
+          const isLeaf = cmd.path.length === depth + 1;
 
-          if (isLastPart) {
-            // This is the command itself
+          if (isLeaf) {
+            // This is a command
             const commandNode: CommandNode = {
-              label: part,
+              label: cmd.key,
               command: cmd,
             };
-            currentParent.children!.push(commandNode);
+            parentNode.children!.push(commandNode);
           } else {
             // This is a group
-            if (!currentLevel.has(part)) {
+            if (!groups.has(currentKey)) {
               const groupNode: CommandNode = {
-                label: part,
+                label: currentKey,
                 children: [],
               };
-              currentLevel.set(part, groupNode);
-              currentParent.children!.push(groupNode);
-            }
-
-            const groupNode = currentLevel.get(part)!;
-            currentParent = groupNode;
-            currentLevel = new Map();
-
-            // Update currentLevel to point to the children of this group
-            for (const child of groupNode.children!) {
-              if (!child.command) {
-                currentLevel.set(child.label, child);
-              }
+              groups.set(currentKey, groupNode);
+              parentNode.children!.push(groupNode);
             }
           }
         }
-      }
 
+        // Recursively build children for groups
+        for (const [groupKey, groupNode] of groups) {
+          buildNestedStructure(groupNode, depth + 1);
+        }
+      };
+
+      buildNestedStructure(fileNode);
       this.treeData.push(fileNode);
     }
 
@@ -297,6 +310,7 @@ export class CommandTreeProvider
 
     const filePath = node.command.filePath;
     const commandKey = node.command.key;
+    const commandPath = node.command.path;
 
     // Check if this is a package.json file
     if (path.basename(filePath) === "package.json") {
@@ -312,7 +326,12 @@ export class CommandTreeProvider
       );
       const jsonContent = JSON.parse(content.toString());
 
-      delete jsonContent[commandKey];
+      // Navigate to the nested location and delete the command
+      let current = jsonContent;
+      for (let i = 0; i < commandPath.length - 1; i++) {
+        current = current[commandPath[i]];
+      }
+      delete current[commandPath[commandPath.length - 1]];
 
       const updatedContent = JSON.stringify(jsonContent, null, 2);
       await vscode.workspace.fs.writeFile(
@@ -336,6 +355,7 @@ export class CommandTreeProvider
 
     const filePath = node.command.filePath;
     const commandKey = node.command.key;
+    const commandPath = node.command.path;
     const currentCommand = node.command.command;
 
     // Check if this is a package.json file
@@ -378,7 +398,12 @@ export class CommandTreeProvider
       );
       const jsonContent = JSON.parse(content.toString());
 
-      jsonContent[commandKey] = commandData;
+      // Navigate to the nested location and update the command
+      let current = jsonContent;
+      for (let i = 0; i < commandPath.length - 1; i++) {
+        current = current[commandPath[i]];
+      }
+      current[commandPath[commandPath.length - 1]] = commandData;
 
       const updatedContent = JSON.stringify(jsonContent, null, 2);
       await vscode.workspace.fs.writeFile(
@@ -493,7 +518,7 @@ export class CommandTreeProvider
     // Get command key, command, and description
     const commandKey = await vscode.window.showInputBox({
       prompt:
-        'Enter command key (e.g., "backend-api/build" or "database/seed")',
+        'Enter command key (e.g., "build", "start-server", "special/command")',
     });
 
     if (!commandKey) {
@@ -525,6 +550,7 @@ export class CommandTreeProvider
       );
       const jsonContent = JSON.parse(content.toString());
 
+      // Set the command directly at the root level
       jsonContent[commandKey] = commandData;
 
       const updatedContent = JSON.stringify(jsonContent, null, 2);
