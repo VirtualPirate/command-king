@@ -4,14 +4,19 @@ Command King is a VS Code extension that allows you to manage and execute custom
 
 ## Features
 
-- **Automatic Discovery**: Scans your workspace for `.cmdk` files automatically
+- **Automatic Discovery**: Scans your workspace for `.cmdk` files and `package.json` files automatically
+- **Package.json Scripts**: Automatically includes npm scripts from package.json files in the command tree
 - **Hierarchical Organization**: Commands are organized in a tree structure based on their keys (using `/` as separator)
 - **Quick Execution**: Run commands directly in VS Code's integrated terminal
-- **CRUD Operations**: Add, edit, and delete commands through the UI
-- **Real-time Updates**: File watcher automatically refreshes the view when `.cmdk` files change
-- **Multiple Files**: Support for multiple `.cmdk` files in your workspace
+- **CRUD Operations**: Add, edit, and delete commands through the UI (read-only for package.json scripts)
+- **Real-time Updates**: File watcher automatically refreshes the view when `.cmdk` files or `package.json` files change
+- **Multiple Files**: Support for multiple `.cmdk` files and multiple `package.json` files in your workspace
 
 ## Usage
+
+### Package.json Scripts
+
+Command King automatically discovers and displays npm scripts from any `package.json` files in your workspace. The scripts are displayed under a "package.json" node and can be executed directly. These scripts are read-only (you cannot edit or delete them from Command King - edit the `package.json` file directly).
 
 ### Creating .cmdk Files
 
@@ -48,6 +53,15 @@ commands.cmdk
 │   ├── up
 │   └── down
 └── random_command
+
+package.json
+├── vscode:prepublish
+├── compile
+├── watch
+├── package
+├── check-types
+├── lint
+└── test
 ```
 
 ### Available Actions

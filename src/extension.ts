@@ -27,6 +27,7 @@ class CommandTreeProvider implements vscode.TreeDataProvider<CommandNode> {
   > = this._onDidChangeTreeData.event;
 
   private commands: Map<string, CommandItem[]> = new Map();
+  private packageJsonCommands: Map<string, CommandItem[]> = new Map();
   private treeData: CommandNode[] = [];
 
   constructor() {
@@ -35,8 +36,10 @@ class CommandTreeProvider implements vscode.TreeDataProvider<CommandNode> {
 
   refresh(): void {
     this.scanForCmdkFiles().then(() => {
-      this.buildTreeData();
-      this._onDidChangeTreeData.fire();
+      this.scanForPackageJsonFiles().then(() => {
+        this.buildTreeData();
+        this._onDidChangeTreeData.fire();
+      });
     });
   }
 
@@ -45,7 +48,7 @@ class CommandTreeProvider implements vscode.TreeDataProvider<CommandNode> {
 
     if (element.isFile) {
       treeItem.contextValue = "cmdkFile";
-      treeItem.iconPath = new vscode.ThemeIcon("file");
+      treeItem.iconPath = new vscode.ThemeIcon("folder");
       treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
     } else if (element.command) {
       treeItem.contextValue = "command";
@@ -57,6 +60,7 @@ class CommandTreeProvider implements vscode.TreeDataProvider<CommandNode> {
         title: "Write to Terminal",
         arguments: [element],
       };
+      treeItem.iconPath = new vscode.ThemeIcon("terminal");
     } else {
       treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
       treeItem.iconPath = new vscode.ThemeIcon("folder");
@@ -68,15 +72,15 @@ class CommandTreeProvider implements vscode.TreeDataProvider<CommandNode> {
   getChildren(element?: CommandNode): Thenable<CommandNode[]> {
     if (!element) {
       if (this.treeData.length === 0) {
-        // Return a placeholder node when no .cmdk files are found
+        // Return a placeholder node when no .cmdk files or package.json files are found
         const placeholderNode: CommandNode = {
-          label: "No .cmdk files found",
+          label: "No commands found",
           children: [
             {
               label: "Create a .cmdk file to get started",
             },
             {
-              label: "Example: commands.cmdk",
+              label: "Or ensure package.json has scripts",
             },
           ],
         };
@@ -131,9 +135,53 @@ class CommandTreeProvider implements vscode.TreeDataProvider<CommandNode> {
     );
   }
 
+  private async scanForPackageJsonFiles(): Promise<void> {
+    this.packageJsonCommands.clear();
+
+    if (!vscode.workspace.workspaceFolders) {
+      return;
+    }
+
+    for (const folder of vscode.workspace.workspaceFolders) {
+      const packageJsonFiles = await vscode.workspace.findFiles(
+        new vscode.RelativePattern(folder, "**/package.json"),
+        "**/node_modules/**"
+      );
+
+      for (const file of packageJsonFiles) {
+        try {
+          const content = await vscode.workspace.fs.readFile(file);
+          const jsonContent = JSON.parse(content.toString());
+
+          if (jsonContent.scripts && typeof jsonContent.scripts === "object") {
+            const commands: CommandItem[] = [];
+            for (const [scriptName, scriptCommand] of Object.entries(
+              jsonContent.scripts
+            )) {
+              if (typeof scriptCommand === "string") {
+                commands.push({
+                  key: scriptName,
+                  command: `npm run ${scriptName}`,
+                  filePath: file.fsPath,
+                });
+              }
+            }
+
+            if (commands.length > 0) {
+              this.packageJsonCommands.set(file.fsPath, commands);
+            }
+          }
+        } catch (error) {
+          console.error(`Error reading ${file.fsPath}:`, error);
+        }
+      }
+    }
+  }
+
   private buildTreeData(): void {
     this.treeData = [];
 
+    // Add .cmdk files
     for (const [filePath, commands] of this.commands) {
       const fileName = path.basename(filePath, ".cmdk");
       const fileNode: CommandNode = {
@@ -190,6 +238,28 @@ class CommandTreeProvider implements vscode.TreeDataProvider<CommandNode> {
 
       this.treeData.push(fileNode);
     }
+
+    // Add package.json files
+    for (const [filePath, commands] of this.packageJsonCommands) {
+      const fileName = "package.json";
+      const fileNode: CommandNode = {
+        label: fileName,
+        isFile: true,
+        filePath: filePath,
+        children: [],
+      };
+
+      // Add all scripts as direct children (no hierarchy for package.json scripts)
+      for (const cmd of commands) {
+        const commandNode: CommandNode = {
+          label: cmd.key,
+          command: cmd,
+        };
+        fileNode.children!.push(commandNode);
+      }
+
+      this.treeData.push(fileNode);
+    }
   }
 
   getCommandByNode(node: CommandNode): CommandItem | undefined {
@@ -204,7 +274,11 @@ class CommandTreeProvider implements vscode.TreeDataProvider<CommandNode> {
   }
 
   getCommands(): Map<string, CommandItem[]> {
-    return this.commands;
+    const allCommands = new Map(this.commands);
+    for (const [filePath, commands] of this.packageJsonCommands) {
+      allCommands.set(filePath, commands);
+    }
+    return allCommands;
   }
 
   async deleteCommand(node: CommandNode): Promise<void> {
@@ -214,6 +288,14 @@ class CommandTreeProvider implements vscode.TreeDataProvider<CommandNode> {
 
     const filePath = node.command.filePath;
     const commandKey = node.command.key;
+
+    // Check if this is a package.json file
+    if (path.basename(filePath) === "package.json") {
+      vscode.window.showWarningMessage(
+        "Cannot delete package.json scripts from Command King. Edit package.json directly."
+      );
+      return;
+    }
 
     try {
       const content = await vscode.workspace.fs.readFile(
@@ -246,6 +328,14 @@ class CommandTreeProvider implements vscode.TreeDataProvider<CommandNode> {
     const filePath = node.command.filePath;
     const commandKey = node.command.key;
     const currentCommand = node.command.command;
+
+    // Check if this is a package.json file
+    if (path.basename(filePath) === "package.json") {
+      vscode.window.showWarningMessage(
+        "Cannot edit package.json scripts from Command King. Edit package.json directly."
+      );
+      return;
+    }
 
     const newCommand = await vscode.window.showInputBox({
       prompt: `Edit command for "${commandKey}"`,
@@ -280,6 +370,14 @@ class CommandTreeProvider implements vscode.TreeDataProvider<CommandNode> {
   }
 
   async addCommand(filePath?: string): Promise<void> {
+    // Check if this is a package.json file
+    if (filePath && path.basename(filePath) === "package.json") {
+      vscode.window.showWarningMessage(
+        "Cannot add commands to package.json from Command King. Edit package.json directly."
+      );
+      return;
+    }
+
     // If no file path provided, let user choose or create a new .cmdk file
     let targetFilePath = filePath;
 
@@ -592,10 +690,16 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // Watch for file changes
-  const watcher = vscode.workspace.createFileSystemWatcher("**/*.cmdk");
-  watcher.onDidChange(() => provider.refresh());
-  watcher.onDidCreate(() => provider.refresh());
-  watcher.onDidDelete(() => provider.refresh());
+  const cmdkWatcher = vscode.workspace.createFileSystemWatcher("**/*.cmdk");
+  cmdkWatcher.onDidChange(() => provider.refresh());
+  cmdkWatcher.onDidCreate(() => provider.refresh());
+  cmdkWatcher.onDidDelete(() => provider.refresh());
+
+  const packageJsonWatcher =
+    vscode.workspace.createFileSystemWatcher("**/package.json");
+  packageJsonWatcher.onDidChange(() => provider.refresh());
+  packageJsonWatcher.onDidCreate(() => provider.refresh());
+  packageJsonWatcher.onDidDelete(() => provider.refresh());
 
   context.subscriptions.push(
     treeView,
@@ -607,7 +711,8 @@ export function activate(context: vscode.ExtensionContext) {
     addCommand,
     openCmdkFile,
     showKebabMenu,
-    watcher
+    cmdkWatcher,
+    packageJsonWatcher
   );
 
   // Initial refresh
