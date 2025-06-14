@@ -1,6 +1,7 @@
 export interface CommandItem {
   key: string;
   command: string;
+  description?: string;
   filePath: string;
 }
 

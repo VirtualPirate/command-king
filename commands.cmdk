@@ -1,18 +1,45 @@
 {
-  "backend-api/build": "npm run build",
-  "backend-api/run": "npm run dev",
+  "backend-api/build": {
+    "command": "npm run build",
+    "description": "Build the backend API for production"
+  },
+  "backend-api/run": {
+    "command": "npm run dev",
+    "description": "Start the backend API in development mode"
+  },
   "backend-api/test": "npm test",
-  "database/seed": "npm run db:seed",
-  "database/migrate": "npm run db:migrate",
+  "database/seed": {
+    "command": "npm run db:seed",
+    "description": "Populate database with initial data"
+  },
+  "database/migrate": {
+    "command": "npm run db:migrate",
+    "description": "Run database migrations"
+  },
   "database/others/data-only": "npm run db:data-only",
-  "database/others/backup": "npm run db:backup",
-  "frontend/build": "npm run build:frontend",
+  "database/others/backup": {
+    "command": "npm run db:backup",
+    "description": "Create a backup of the database"
+  },
+  "frontend/build": {
+    "command": "npm run build:frontend",
+    "description": "Build frontend assets for production"
+  },
   "frontend/dev": "npm run dev:frontend",
-  "docker/up": "docker-compose up -d",
+  "docker/up": {
+    "command": "docker-compose up -d",
+    "description": "Start all Docker services in detached mode"
+  },
   "docker/down": "docker-compose down",
-  "docker/logs": "docker-compose logs -f",
+  "docker/logs": {
+    "command": "docker-compose logs -f",
+    "description": "Follow Docker container logs in real-time"
+  },
   "random_command": "echo 'Hello from Command King!'",
   "git/status": "git status",
   "git/pull": "git pull",
-  "git/push": "git push origin main"
+  "git/push": {
+    "command": "git push origin main",
+    "description": "Push changes to the main branch"
+  }
 } 

@@ -38,7 +38,16 @@ export class CommandTreeProvider
       treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
     } else if (element.command) {
       treeItem.contextValue = "command";
-      treeItem.tooltip = `${element.command.command}`;
+
+      // Show description in the label if available
+      const description = element.command.description;
+      if (description) {
+        treeItem.label = `${element.label} - ${description}`;
+        treeItem.tooltip = `Command: ${element.command.command}\nDescription: ${description}`;
+      } else {
+        treeItem.tooltip = `Command: ${element.command.command}`;
+      }
+
       treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
       // Set command to execute when clicked
       treeItem.command = {
@@ -96,11 +105,26 @@ export class CommandTreeProvider
           const jsonContent = JSON.parse(content.toString());
 
           const commands: CommandItem[] = [];
-          for (const [key, command] of Object.entries(jsonContent)) {
-            if (typeof command === "string") {
+          for (const [key, commandData] of Object.entries(jsonContent)) {
+            if (typeof commandData === "string") {
               commands.push({
                 key,
-                command,
+                command: commandData,
+                filePath: file.fsPath,
+              });
+            } else if (
+              typeof commandData === "object" &&
+              commandData !== null &&
+              "command" in commandData &&
+              typeof commandData.command === "string"
+            ) {
+              commands.push({
+                key,
+                command: commandData.command,
+                description:
+                  "description" in commandData
+                    ? (commandData.description as string)
+                    : undefined,
                 filePath: file.fsPath,
               });
             }
@@ -331,13 +355,30 @@ export class CommandTreeProvider
       return; // User cancelled
     }
 
+    const currentDescription = node.command.description || "";
+    const newDescription = await vscode.window.showInputBox({
+      prompt: `Edit description for "${commandKey}" (optional)`,
+      value: currentDescription,
+      placeHolder: "Brief description of what this command does",
+    });
+
+    if (newDescription === undefined) {
+      return; // User cancelled
+    }
+
+    // Create command object with description if provided
+    const commandData =
+      newDescription && newDescription.trim()
+        ? { command: newCommand, description: newDescription.trim() }
+        : newCommand;
+
     try {
       const content = await vscode.workspace.fs.readFile(
         vscode.Uri.file(filePath)
       );
       const jsonContent = JSON.parse(content.toString());
 
-      jsonContent[commandKey] = newCommand;
+      jsonContent[commandKey] = commandData;
 
       const updatedContent = JSON.stringify(jsonContent, null, 2);
       await vscode.workspace.fs.writeFile(
@@ -449,7 +490,7 @@ export class CommandTreeProvider
       );
     }
 
-    // Get command key and command
+    // Get command key, command, and description
     const commandKey = await vscode.window.showInputBox({
       prompt:
         'Enter command key (e.g., "backend-api/build" or "database/seed")',
@@ -467,13 +508,24 @@ export class CommandTreeProvider
       return;
     }
 
+    const description = await vscode.window.showInputBox({
+      prompt: `Enter description for "${commandKey}" (optional)`,
+      placeHolder: "Brief description of what this command does",
+    });
+
+    // Create command object with description if provided
+    const commandData =
+      description && description.trim()
+        ? { command, description: description.trim() }
+        : command;
+
     try {
       const content = await vscode.workspace.fs.readFile(
         vscode.Uri.file(targetFilePath)
       );
       const jsonContent = JSON.parse(content.toString());
 
-      jsonContent[commandKey] = command;
+      jsonContent[commandKey] = commandData;
 
       const updatedContent = JSON.stringify(jsonContent, null, 2);
       await vscode.workspace.fs.writeFile(

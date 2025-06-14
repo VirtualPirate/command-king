@@ -8,6 +8,7 @@ Command King is a VS Code extension that allows you to manage and execute custom
 - **Package.json Scripts**: Automatically includes npm scripts from package.json files in the command tree
 - **Hierarchical Organization**: Commands are organized in a tree structure based on their keys (using `/` as separator)
 - **Quick Execution**: Run commands directly in VS Code's integrated terminal
+- **Command Descriptions**: Add optional descriptions to your commands for better documentation and team collaboration
 - **CRUD Operations**: Add, edit, and delete commands through the UI (read-only for package.json scripts)
 - **Real-time Updates**: File watcher automatically refreshes the view when `.cmdk` files or `package.json` files change
 - **Multiple Files**: Support for multiple `.cmdk` files and multiple `package.json` files in your workspace
@@ -20,16 +21,25 @@ Command King automatically discovers and displays npm scripts from any `package.
 
 ### Creating .cmdk Files
 
-Create `.cmdk` files in your workspace with JSON content mapping command keys to shell commands:
+Create `.cmdk` files in your workspace with JSON content mapping command keys to shell commands. You can use either simple string commands or extended objects with descriptions:
 
 ```json
 {
-  "backend-api/build": "npm run build",
+  "backend-api/build": {
+    "command": "npm run build",
+    "description": "Build the backend API for production"
+  },
   "backend-api/run": "npm run dev",
-  "database/seed": "npm run db:seed",
+  "database/seed": {
+    "command": "npm run db:seed",
+    "description": "Populate database with initial data"
+  },
   "database/migrate": "npm run db:migrate",
   "database/others/data-only": "npm run db:data-only",
-  "docker/up": "docker-compose up -d",
+  "docker/up": {
+    "command": "docker-compose up -d",
+    "description": "Start all Docker services in detached mode"
+  },
   "docker/down": "docker-compose down",
   "random_command": "echo 'Hello World!'"
 }
@@ -134,6 +144,8 @@ pnpm test
 
 `.cmdk` files use JSON format with the following structure:
 
+### Simple Format (Backward Compatible)
+
 ```json
 {
   "command-key": "shell command to execute",
@@ -142,9 +154,39 @@ pnpm test
 }
 ```
 
+### Extended Format with Descriptions
+
+```json
+{
+  "command-key": {
+    "command": "shell command to execute",
+    "description": "Optional description of what this command does"
+  },
+  "group/subcommand": {
+    "command": "another command",
+    "description": "Description for this command"
+  }
+}
+```
+
+### Mixed Format
+
+You can mix both simple strings and extended objects in the same file:
+
+```json
+{
+  "simple-command": "echo 'Hello World!'",
+  "documented-command": {
+    "command": "npm run build",
+    "description": "Build the application for production"
+  }
+}
+```
+
 - **Keys**: Can contain forward slashes (`/`) to create hierarchical organization
-- **Values**: Must be strings containing the shell commands to execute
+- **Values**: Can be either strings (simple format) or objects with `command` and optional `description` properties
 - **File Extension**: Must be `.cmdk`
+- **Descriptions**: When provided, descriptions appear in the tree view and tooltips for better documentation
 
 ## Contributing
 
