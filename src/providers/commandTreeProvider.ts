@@ -130,8 +130,7 @@ export class CommandTreeProvider
 
     for (const folder of vscode.workspace.workspaceFolders) {
       const packageJsonFiles = await vscode.workspace.findFiles(
-        new vscode.RelativePattern(folder, "**/package.json"),
-        "**/node_modules/**"
+        new vscode.RelativePattern(folder, "package.json")
       );
 
       for (const file of packageJsonFiles) {
