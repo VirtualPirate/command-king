@@ -12,3 +12,4 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
+high_quality_output.gif

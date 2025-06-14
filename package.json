@@ -3,7 +3,7 @@
   "displayName": "Command King",
   "description": "Manage and execute custom commands from .cmdk files",
   "version": "0.0.1",
-  "publisher": "artazasameen",
+  "publisher": "ArtazaSameen",
   "repository": {
     "type": "git",
     "url": "https://github.com/artazasameen/command-king.git"
